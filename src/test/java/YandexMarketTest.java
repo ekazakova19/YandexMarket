@@ -9,12 +9,12 @@ public class YandexMarketTest extends BaseTest {
     private static final Logger logger = LogManager.getLogger(YandexMarketTest.class);
 
     @Test
-    public void testComparisionTwoItems()
+    public void testComparisionTwoItems() throws InterruptedException
     {
         openYandexMarket();
-        driver.findElement(By.id("27903768-tab")).click();
-        driver.findElement(By.linkText("Электроника")).click();
-        driver.findElement(By.linkText("Смартфоны")).click();
+        clickOn(By.id("27903767-tab"));
+        clickOn(By.linkText("Электроника"));
+        clickOn(By.linkText("Смартфоны"));
         filterByManufacturer("xiaomi","7893318_7701962");
         sortByPrice();
         addFirstItem();
@@ -25,12 +25,13 @@ public class YandexMarketTest extends BaseTest {
         checkItemAddedToComparision();
 
         logger.info("Checking items in comparision basket...");
-        driver.findElement(By.cssSelector("a.link.header2-menu__item.header2-menu__item_type_compare")).click();
+        driver.findElement(By.cssSelector("a.link.headr2-menu__item.header2-menu__item_type_compare")).click();
         Assert.assertEquals(2,driver.findElements(By.cssSelector("div.n-compare-content__line > div.n-compare-cell")).size());
         logger.info("Check completed successfully");
 
         logger.info("Checking common OS option...");
         driver.findElement(By.cssSelector("div.n-compare-toolbar>div.n-compare-show-controls span.link.n-compare-show-controls__all")).click();
+
         Assert.assertTrue("Operation System characteristic is not shown",isOSCharacteristicShown());
         logger.info("Check completed successfully");
 
@@ -40,6 +41,11 @@ public class YandexMarketTest extends BaseTest {
         logger.info("Check completed successfully");
     }
 
+    public void clickOn(By by){
+        wait.until(ExpectedConditions.elementToBeClickable(by));
+        driver.findElement(by).click();
+        logger.info("Click on element with locator {}", by);
+    }
     public boolean isOSCharacteristicShown(){
         try {
             driver.findElement(By.xpath("//div[contains(@class,'n-compare-row_hidden_yes')]/div/div[contains(@class,'n-compare-row-name') and contains(text(),'Операционная система')]"));
@@ -108,12 +114,8 @@ public class YandexMarketTest extends BaseTest {
 
     public void openYandexMarket(){
         driver.get("https://ya.ru/");
-        Cookie cookie1 = driver.manage().getCookieNamed("yandex_gid");
-        Cookie cookie2 = driver.manage().getCookieNamed("yandexuid");
         driver.get("https://market.yandex.ru/");
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//button[contains(@id, '27903768-tab')]")));
-        driver.manage().addCookie(new Cookie("yandex_gid", cookie1.getValue()));
-        driver.manage().addCookie(new Cookie("yandexuid", cookie2.getValue()));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("27903767-tab")));
         logger.info("https://market.yandex.ru/ is opened");
     }
 
