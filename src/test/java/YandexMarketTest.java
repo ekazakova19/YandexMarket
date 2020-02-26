@@ -9,7 +9,7 @@ public class YandexMarketTest extends BaseTest {
     private static final Logger logger = LogManager.getLogger(YandexMarketTest.class);
 
     @Test
-    public void testComparisionTwoItems() throws InterruptedException
+    public void testComparisionTwoItems()
     {
         openYandexMarket();
         clickOn(By.id("27903767-tab"));
@@ -23,41 +23,73 @@ public class YandexMarketTest extends BaseTest {
         filterByManufacturer("huawei","7893318_459710");
         addFirstItem();
         checkItemAddedToComparision();
+        openComparePage();
 
         logger.info("Checking items in comparision basket...");
-        driver.findElement(By.cssSelector("a.link.headr2-menu__item.header2-menu__item_type_compare")).click();
-        Assert.assertEquals(2,driver.findElements(By.cssSelector("div.n-compare-content__line > div.n-compare-cell")).size());
+        assertThatCountOfItemIs(2);
         logger.info("Check completed successfully");
 
-        logger.info("Checking common OS option...");
-        driver.findElement(By.cssSelector("div.n-compare-toolbar>div.n-compare-show-controls span.link.n-compare-show-controls__all")).click();
-
-        Assert.assertTrue("Operation System characteristic is not shown",isOSCharacteristicShown());
+        logger.info("Checking that OS option displayed on All Characteristics page...");
+        clickOn(By.cssSelector("div.n-compare-toolbar>div.n-compare-show-controls span.link.n-compare-show-controls__all"));
+        assertThatOSCharacteristicShown();
         logger.info("Check completed successfully");
 
-        logger.info("Checking different OS option...");
-        driver.findElement(By.cssSelector("div.n-compare-toolbar>div.n-compare-show-controls span.link.n-compare-show-controls__diff")).click();
-        Assert.assertFalse("Operation System characteristic is shown",isOSCharacteristicShown());
+        logger.info("Checking that OS option not displayed on Different Characteristics page...");
+        clickOn(By.cssSelector("div.n-compare-toolbar>div.n-compare-show-controls span.link.n-compare-show-controls__diff"));
+        assertThatOSCharacteristicSNotShown();
         logger.info("Check completed successfully");
     }
 
     public void clickOn(By by){
-        wait.until(ExpectedConditions.elementToBeClickable(by));
-        driver.findElement(by).click();
-        logger.info("Click on element with locator {}", by);
-    }
-    public boolean isOSCharacteristicShown(){
         try {
-            driver.findElement(By.xpath("//div[contains(@class,'n-compare-row_hidden_yes')]/div/div[contains(@class,'n-compare-row-name') and contains(text(),'Операционная система')]"));
-            return false;
+            WebElement element = driver.findElement(by);
+            wait.until(ExpectedConditions.elementToBeClickable(by));
+            element.click();
+            logger.info("Successfully clicked on element with locator {}", by);
         } catch (NoSuchElementException e) {
-            return true;
-        } catch (Exception e){
-            logger.error(e);
-            return false;
+           logger.error("Could not find element. Error {} ", e.getMessage());
         }
     }
 
+     public void assertThatOSCharacteristicShown(){
+        if(isOSHidden()){
+            logger.error("Actual result - OS not shown,  but expected - shown");
+            Assert.fail();
+        }
+        logger.info("OS is shown");
+
+     }
+    public void assertThatOSCharacteristicSNotShown(){
+        if(!isOSHidden()){
+            logger.error("Actual result - OS shown, but expected - not shown");
+            Assert.fail();
+        }
+        logger.info("OS is not shown");
+    }
+
+
+    public void assertThatCountOfItemIs(int expectedCount){
+        Assert.assertEquals(expectedCount,driver.findElements(By.cssSelector("div.n-compare-content__line > div.n-compare-cell")).size());
+    }
+
+    public void openComparePage(){
+        if(isComparePopupShown()){
+            WebElement compareButton = driver.findElement(By.cssSelector("a.link.header2-menu__item.header2-menu__item_type_compare"));
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript("arguments[0].scrollIntoView();", compareButton);
+            wait.until(ExpectedConditions.elementToBeClickable(compareButton));
+            clickOn(By.cssSelector("a.link.header2-menu__item.header2-menu__item_type_compare"));
+        }
+    }
+
+    public boolean isOSHidden(){
+        try {
+            driver.findElement(By.xpath("//div[contains(@class,'n-compare-row_hidden_yes')]/div/div[contains(@class,'n-compare-row-name') and contains(text(),'Операционная система')]"));
+            return true;
+        } catch (NoSuchElementException e) {
+            return false;
+        }
+    }
 
     public void filterByManufacturer(String manufacturer, String checkboxIdLocator){
         WebElement searchPrepack = driver.findElement(By.cssSelector("#search-prepack"));
@@ -85,7 +117,6 @@ public class YandexMarketTest extends BaseTest {
             logger.warn("Filter by {} not applied already",manufacturer);
         }
         searchPrepack.findElement(By.cssSelector("div._2Hue1bCg-N > fieldset > footer > button")).click();
-
     }
 
     public void sortByPrice(){
@@ -95,9 +126,32 @@ public class YandexMarketTest extends BaseTest {
         waitForFilterResultApply();
     }
 
+
     public void checkItemAddedToComparision(){
-        driver.findElement(By.cssSelector("div.popup-informer__pane .popup-informer__title"));
-        logger.info("Item has been added to comparision");
+        if(isComparePopupShown()){
+            By closeButton= By.cssSelector("div.popup-informer__content > div.popup-informer__close");
+            WebElement popup =  driver.findElement(By.cssSelector("div.popup-informer"));
+            wait.until(ExpectedConditions.and(ExpectedConditions.visibilityOf(popup),ExpectedConditions.elementToBeClickable(popup)));
+            wait.until(ExpectedConditions.and(ExpectedConditions.visibilityOfElementLocated(closeButton),ExpectedConditions.elementToBeClickable(closeButton)));
+            clickOn(closeButton);
+            try {
+                wait.until(ExpectedConditions.invisibilityOf(popup));
+            } catch (TimeoutException e) {
+                logger.warn("Popup not closed");
+            }
+            logger.info("Item has been added to comparision");
+        }
+        logger.warn("Popup not appears");
+    }
+
+    public boolean isComparePopupShown(){
+        try {
+            driver.findElement(By.cssSelector("div.popup-informer"));
+            logger.info("Popup appears");
+            return true;
+        } catch (NoSuchElementException e) {
+           return false;
+        }
     }
 
     public void waitForFilterResultApply(){
@@ -110,6 +164,7 @@ public class YandexMarketTest extends BaseTest {
         actions.moveToElement(driver.findElement(By.cssSelector(":nth-child(1) > .n-snippet-cell2__hover > div > div > div"))).perform();
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector(":nth-child(1) > .n-snippet-cell2__hover > div > div > div")));
         driver.findElement(By.cssSelector(":nth-child(1) > .n-snippet-cell2__hover > div > div > div")).click();
+        logger.info("Add the smartphone to comparision - completed");
     }
 
     public void openYandexMarket(){
@@ -118,6 +173,4 @@ public class YandexMarketTest extends BaseTest {
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("27903767-tab")));
         logger.info("https://market.yandex.ru/ is opened");
     }
-
-
 }
