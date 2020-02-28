@@ -18,9 +18,11 @@ public class ComparePage {
         this.driver = driver;
     }
     public void openAllCharacteristics(){
+        logger.info("Open all characteristics");
         driver.findElement(ALL_CHARACTERISTIC_LINK).click();
     }
     public void openDiffCharacteristics(){
+        logger.info("Open different characteristics");
         driver.findElement(DIFF_CHARACTERISTIC_LINK).click();
     }
 

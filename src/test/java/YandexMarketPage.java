@@ -15,12 +15,14 @@ public class YandexMarketPage  {
     public final By SMARTPHONE = By.linkText("Смартфоны");
     public final By XIAOMI_CHECKBOX = By.id("7893318_7701962");
     public final By HUAWEI_CHECKBOX = By.id("7893318_459710");
-    public final By SHOW_ALL_MANUF_BUTTON = By.cssSelector("fieldset[data-autotest-id=\"7893318\"] button");
-    public final By MANUF_INPUT_FIELD = By.id("7893318-suggester");
+    private final By SHOW_ALL_MANUF_BUTTON = By.cssSelector("fieldset[data-autotest-id=\"7893318\"] button");
+    private final By MINIMAZE_ALL_MANUF_BUTTON = By.cssSelector("fieldset[data-autotest-id=\"7893318\"] button");
+    private final By MANUF_INPUT_FIELD = By.id("7893318-suggester");
     private final By PRELOADER =By.cssSelector("div.n-filter-applied-results > div.preloadable__preloader");
     private final By FILTER_BY_PRICE = By.linkText("по цене");
     private final By ADD_TO_COMPARE_BUTTON = By.cssSelector(":nth-child(1) > .n-snippet-cell2__hover > div > div > div");
-    private final By COMPARE_POPUP = By.cssSelector("div.popup-informer");
+    private final By COMPARE_POPUP = By.cssSelector(("div.popup-informer__content"));
+
     private final By CLOSE_COMPARE_POPUP = By.cssSelector("div.popup-informer__content > div.popup-informer__close");
     private final By COMPARE_BUTTON = By.cssSelector("a.link.header2-menu__item.header2-menu__item_type_compare");
     private static final Logger logger = LogManager.getLogger(YandexMarketTest.class);
@@ -48,12 +50,12 @@ public class YandexMarketPage  {
         driver.findElement(MANUF_INPUT_FIELD).sendKeys(manufacturer);
         actions.moveToElement(driver.findElement(checkboxIdLocator)).click().perform();
         logger.info("Filter by {} is applied",manufacturer);
+        waitForFilterResultApply();
         clickOn(SHOW_ALL_MANUF_BUTTON);
-
     }
     public void waitForFilterResultApply(){
         logger.info("Waiting for page reload");
-        wait.until(ExpectedConditions.invisibilityOfElementLocated(PRELOADER));
+        wait.until(ExpectedConditions.attributeToBe(By.cssSelector("div.n-filter-applied-results__content.preloadable"),"style","height: auto;"));
         logger.info("Page reloaded");
     }
 
@@ -69,7 +71,7 @@ public class YandexMarketPage  {
         else {
             logger.warn("Filter by {} had not been applied ",manufacturer);
         }
-        clickOn(SHOW_ALL_MANUF_BUTTON);
+        clickOn(MINIMAZE_ALL_MANUF_BUTTON);
     }
 
     public void sortByPrice(){
@@ -87,35 +89,47 @@ public class YandexMarketPage  {
     public void checkItemAddedToComparision(){
         if(isComparePopupShown()){
             wait.until(ExpectedConditions.and(ExpectedConditions.visibilityOfElementLocated(COMPARE_POPUP),ExpectedConditions.elementToBeClickable(COMPARE_POPUP)));
-            wait.until(ExpectedConditions.and(ExpectedConditions.visibilityOfElementLocated(CLOSE_COMPARE_POPUP),ExpectedConditions.elementToBeClickable(CLOSE_COMPARE_POPUP)));
-            clickOn(CLOSE_COMPARE_POPUP);
-            try {
-                wait.until(ExpectedConditions.invisibilityOfElementLocated(COMPARE_POPUP));
-            } catch (TimeoutException e) {
-                logger.warn("Popup not closed");
-            }
+            closeComparePopup();
             logger.info("Item has been added to comparision");
         }
-        logger.warn("Popup not appears");
+        else {
+            logger.warn("Popup not appears");
+        }
     }
     public boolean isComparePopupShown(){
         try {
             driver.findElement(By.cssSelector("div.popup-informer"));
-            logger.info("Popup appears");
+            logger.info("Popup exists on the page");
             return true;
         } catch (NoSuchElementException e) {
             return false;
         }
     }
 
+    public void closeComparePopup(){
+        wait.until(ExpectedConditions.and(ExpectedConditions.visibilityOfElementLocated(CLOSE_COMPARE_POPUP),ExpectedConditions.elementToBeClickable(CLOSE_COMPARE_POPUP)));
+        clickOn(CLOSE_COMPARE_POPUP);
+        try {
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(COMPARE_POPUP));
+            logger.info("Popup closed");
+        } catch (TimeoutException e) {
+            logger.warn("Popup not closed");
+            clickOn(CLOSE_COMPARE_POPUP);
+        }
+    }
+
     public void openComparePage(){
+        WebElement compareButton = driver.findElement(COMPARE_BUTTON);
         if(isComparePopupShown()){
-            WebElement compareButton = driver.findElement(COMPARE_BUTTON);
             JavascriptExecutor js = (JavascriptExecutor) driver;
             js.executeScript("arguments[0].scrollIntoView();", compareButton);
-            wait.until(ExpectedConditions.elementToBeClickable(compareButton));
-            clickOn(COMPARE_BUTTON);
         }
+        wait.until(ExpectedConditions.elementToBeClickable(compareButton));
+        clickOn(COMPARE_BUTTON);
+    }
+
+    public void openCompareLink(){
+        driver.get("https://market.yandex.ru/compare");
     }
 
     public void openYandexMarket(){

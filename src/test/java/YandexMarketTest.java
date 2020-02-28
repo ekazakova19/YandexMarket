@@ -1,10 +1,7 @@
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.openqa.selenium.*;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 
 public class YandexMarketTest extends BaseTest {
     private static final Logger logger = LogManager.getLogger(YandexMarketTest.class);
@@ -27,10 +24,11 @@ public class YandexMarketTest extends BaseTest {
         yandexMarketPage.addFirstItem();
         yandexMarketPage.checkItemAddedToComparision();
         yandexMarketPage.clearFilterByManufacturer("xiaomi",yandexMarketPage.XIAOMI_CHECKBOX);
-        yandexMarketPage.clearFilterByManufacturer("huawei",yandexMarketPage.HUAWEI_CHECKBOX);
+        yandexMarketPage.filterByManufacturer("huawei",yandexMarketPage.HUAWEI_CHECKBOX);
         yandexMarketPage.addFirstItem();
         yandexMarketPage.checkItemAddedToComparision();
-        yandexMarketPage.openComparePage();
+       // yandexMarketPage.openComparePage();
+        yandexMarketPage.openCompareLink();
         comparePage.assertThatCountOfItemIs(2);
         comparePage.openAllCharacteristics();
         comparePage.assertThatOSCharacteristicShown();
