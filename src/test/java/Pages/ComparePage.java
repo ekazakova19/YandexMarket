@@ -6,25 +6,39 @@ import org.junit.Assert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class ComparePage {
     private WebDriver driver;
+    private WebDriverWait wait;
+    private Actions actions;
+
     private final By COMPARE_ITEM = By.cssSelector("div.n-compare-content__line > div.n-compare-cell");
     private final By HIDDEN_OS =By.xpath("//div[contains(@class,'n-compare-row_hidden_yes')]/div/div[contains(@class,'n-compare-row-name') and contains(text(),'Операционная система')]");
-    private final By ALL_CHARACTERISTIC_LINK = By.cssSelector("div.n-compare-toolbar>div.n-compare-show-controls span.link.n-compare-show-controls__all");
+    private final By ALL_CHARACTERISTIC_LINK = By.cssSelector("div.n-compare-toolbar>div.n-compare-show-controls span.link.n-compare-show-controls__all > span");
     private final By DIFF_CHARACTERISTIC_LINK =By.cssSelector("div.n-compare-toolbar>div.n-compare-show-controls span.link.n-compare-show-controls__diff");
     private static final Logger logger = LogManager.getLogger(ComparePage.class);
 
     public ComparePage(WebDriver driver) {
         this.driver = driver;
+        wait = new WebDriverWait(driver,5);
+        actions = new Actions(driver);
     }
+
     public void openAllCharacteristics(){
-        logger.info("Open all characteristics");
+        wait.until(ExpectedConditions.elementToBeClickable(ALL_CHARACTERISTIC_LINK));
         driver.findElement(ALL_CHARACTERISTIC_LINK).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.n-compare-toolbar>div.n-compare-show-controls span.link.n-compare-show-controls__all.n-compare-show-controls__all_active_yes")));
+        logger.info("All characteristics tab is opened");
     }
+
     public void openDiffCharacteristics(){
-        logger.info("Open different characteristics");
+        wait.until(ExpectedConditions.elementToBeClickable(DIFF_CHARACTERISTIC_LINK));
         driver.findElement(DIFF_CHARACTERISTIC_LINK).click();
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("div.n-compare-toolbar>div.n-compare-show-controls span.link.n-compare-show-controls__diff.n-compare-show-controls__diff_active_yes")));
+        logger.info("Different characteristics tab is opened");
     }
 
     public void assertThatCountOfItemIs(int expectedCount){
